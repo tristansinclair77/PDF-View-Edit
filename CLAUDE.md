@@ -117,6 +117,18 @@ src/
 - All code must pass linting and type-checking before commit
 - Tests must pass before merge
 
+## Core File Maintenance
+The following files are **core project files** and must be kept accurate and up to date at all times:
+- `.gitignore` — Must reflect all generated, secret, and non-source files in the project. Review and update when adding new tools, build outputs, or file types.
+- `README.md` — Must accurately describe features, tech stack, setup instructions, and shortcuts. Update whenever features are added, removed, or changed.
+- `LICENSE` — Must remain present and unchanged unless the author requests a change.
+
+**On every edit session**, verify:
+1. `.gitignore` covers any new build artifacts, dependencies, or generated files
+2. `README.md` reflects the current state of the project (features, commands, structure)
+3. No source files have stale imports, dead code from removed features, or broken references
+4. All files that were moved or renamed are updated in any files that reference them
+
 ## Performance Targets
 - PDF load time: < 2 seconds for a 100-page document
 - Page render time: < 200ms per page at 150 DPI

@@ -44,6 +44,8 @@ A desktop PDF viewer and editor built with Electron, React, and TypeScript.
 ## Project Structure
 
 ```
+cmd/                 # Batch scripts
+docs/                # Project planning and working documents
 src/
   main/              # Electron main process
     index.ts         # Entry point, window creation

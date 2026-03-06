@@ -32,5 +32,9 @@ coverage/
 # Electron
 *.asar
 
+# Ref folder contents (temp files shared with Claude)
+ref/*
+!ref/.gitkeep
+
 # Misc
 *.tsbuildinfo

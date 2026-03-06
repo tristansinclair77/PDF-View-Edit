@@ -144,24 +144,11 @@ export const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({ pageNum, wid
 
     const getPointerFromEvent = (e: TPointerEvent): { x: number; y: number } => {
       const mouseEvt = e as MouseEvent;
-      const el = canvas.getSelectionElement();
-      const rect = el.getBoundingClientRect();
-      const x = mouseEvt.clientX - rect.left;
-      const y = mouseEvt.clientY - rect.top;
-      // DEBUG: log coordinate systems to find the offset bug
-      console.log('POINTER DEBUG', {
-        clientX: mouseEvt.clientX, clientY: mouseEvt.clientY,
-        rectLeft: rect.left, rectTop: rect.top, rectW: rect.width, rectH: rect.height,
-        elW: el.offsetWidth, elH: el.offsetHeight,
-        canvasW: canvas.width, canvasH: canvas.height,
-        cssW: el.style.width, cssH: el.style.height,
-        htmlW: (el as HTMLCanvasElement).width, htmlH: (el as HTMLCanvasElement).height,
-        dpr: window.devicePixelRatio,
-        manual: { x, y },
-        scenePoint: canvas.getScenePoint(e),
-        viewportPoint: canvas.getViewportPoint(e),
-      });
-      return { x, y };
+      const rect = canvas.getSelectionElement().getBoundingClientRect();
+      return {
+        x: mouseEvt.clientX - rect.left,
+        y: mouseEvt.clientY - rect.top,
+      };
     };
 
     const handleMouseDown = (opt: TPointerEventInfo) => {
