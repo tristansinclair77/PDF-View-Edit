@@ -1,0 +1,25 @@
+appId: com.pdfviewedit.app
+productName: PDF View & Edit
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - node_modules/**/*
+  - package.json
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  fileAssociations:
+    - ext: pdf
+      name: PDF Document
+      description: PDF Document
+      role: Editor
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  perMachine: false
+  license: null
