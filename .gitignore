@@ -1,7 +1,36 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+out/
 release/
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Logs
 *.log
+npm-debug.log*
+
+# OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+
+# Electron
+*.asar
+
+# Misc
+*.tsbuildinfo
