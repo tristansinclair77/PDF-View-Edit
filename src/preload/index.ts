@@ -12,6 +12,7 @@ const electronAPI: ElectronAPI = {
   pdfGetPageInfo: (pageNum) => ipcRenderer.invoke('pdf:get-page-info', pageNum),
   pdfExtractText: (params) => ipcRenderer.invoke('pdf:extract-text', params),
   pdfExtractImages: (pageNum) => ipcRenderer.invoke('pdf:extract-images', pageNum),
+  pdfExportImagesToFolder: () => ipcRenderer.invoke('pdf:export-images-to-folder'),
   pdfApplyRedactions: (redactions) => ipcRenderer.invoke('pdf:apply-redactions', redactions),
   pdfApplyEdits: (params) => ipcRenderer.invoke('pdf:apply-edits', params),
 

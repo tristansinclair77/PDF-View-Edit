@@ -259,9 +259,93 @@ export class PdfService {
     return blocks;
   }
 
+  async convertEpsToPdf(epsBuffer: ArrayBuffer): Promise<ArrayBuffer> {
+    // Each call gets a fresh module instance — Emscripten's callMain can only run once
+    // per instance since Ghostscript calls exit() on completion.
+    const { default: loadGS } = await import('@okathira/ghostpdl-wasm');
+    const gs = await loadGS();
+
+    gs.FS.writeFile('input.eps', new Uint8Array(epsBuffer));
+
+    try {
+      gs.callMain([
+        '-dBATCH',
+        '-dNOPAUSE',
+        '-dEPSCrop',
+        '-sDEVICE=pdfwrite',
+        '-sOutputFile=output.pdf',
+        'input.eps',
+      ]);
+    } catch (e: unknown) {
+      // Emscripten throws ExitStatus on normal program exit (exit code 0 = success)
+      const isNormalExit =
+        e instanceof Object &&
+        (e as Record<string, unknown>)['name'] === 'ExitStatus' &&
+        (e as Record<string, unknown>)['status'] === 0;
+      if (!isNormalExit) {
+        throw new Error(`Ghostscript EPS conversion failed: ${e}`);
+      }
+    }
+
+    const pdfData = gs.FS.readFile('output.pdf') as Uint8Array;
+    return pdfData.buffer.slice(pdfData.byteOffset, pdfData.byteOffset + pdfData.byteLength) as ArrayBuffer;
+  }
+
+  async renderPagesAsImages(dpi: number = 150): Promise<Array<{ pageNum: number; data: Uint8Array }>> {
+    if (!this.document || !this.documentBuffer) throw new Error('No document loaded');
+
+    const mu = await getMuPDF();
+    const doc = mu.Document.openDocument(Buffer.from(this.documentBuffer), 'application/pdf');
+    const pageCount = doc.countPages();
+    const result: Array<{ pageNum: number; data: Uint8Array }> = [];
+
+    for (let pageNum = 0; pageNum < pageCount; pageNum++) {
+      const page = doc.loadPage(pageNum);
+      const scale = dpi / 72;
+      const matrix = mu.Matrix.scale(scale, scale);
+      const pixmap = page.toPixmap(matrix, mu.ColorSpace.DeviceRGB, false, true);
+      result.push({ pageNum, data: new Uint8Array(pixmap.asPNG()) });
+    }
+
+    return result;
+  }
+
   async extractImages(_pageNum: number): Promise<ImageInfo[]> {
     if (!this.document) throw new Error('No document loaded');
     return [];
+  }
+
+  async extractAllImages(): Promise<Array<{ pageNum: number; index: number; data: Uint8Array; ext: string }>> {
+    if (!this.document || !this.documentBuffer) throw new Error('No document loaded');
+
+    const mu = await getMuPDF();
+    const doc = mu.Document.openDocument(Buffer.from(this.documentBuffer), 'application/pdf');
+    const pageCount = doc.countPages();
+    const result: Array<{ pageNum: number; index: number; data: Uint8Array; ext: string }> = [];
+    let totalIndex = 0;
+
+    for (let pageNum = 0; pageNum < pageCount; pageNum++) {
+      try {
+        const page = doc.loadPage(pageNum);
+        const stext = page.toStructuredText('preserve-images');
+
+        stext.walk({
+          onImageBlock(_bbox: number[], _matrix: number[], image: { toPixmap(): { asPNG(): Uint8Array } }) {
+            try {
+              const pixmap = image.toPixmap();
+              const pngData = pixmap.asPNG();
+              result.push({ pageNum, index: totalIndex++, data: new Uint8Array(pngData), ext: 'png' });
+            } catch {
+              // Skip images that cannot be converted
+            }
+          },
+        });
+      } catch {
+        // Skip pages with errors
+      }
+    }
+
+    return result;
   }
 
   async applyRedactions(redactions: RedactionArea[]): Promise<ArrayBuffer> {

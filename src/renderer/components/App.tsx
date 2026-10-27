@@ -20,6 +20,23 @@ export const App: React.FC = () => {
   const [propertiesVisible, setPropertiesVisible] = React.useState(true);
   const [signatureModalOpen, setSignatureModalOpen] = React.useState(false);
   const [pendingSignatureDataUrl, setPendingSignatureDataUrl] = React.useState<string | null>(null);
+  const [notification, setNotification] = React.useState<string | null>(null);
+
+  const handleExportImages = useCallback(async () => {
+    if (!documentInfo) return;
+    try {
+      const result = await window.electronAPI.pdfExportImagesToFolder();
+      if (result) {
+        const msg = result.count > 0
+          ? `Exported ${result.count} image${result.count !== 1 ? 's' : ''} to: ${result.folder}`
+          : 'No images found in this PDF.';
+        setNotification(msg);
+        setTimeout(() => setNotification(null), 6000);
+      }
+    } catch (err) {
+      useDocumentStore.setState({ error: err instanceof Error ? err.message : 'Image export failed' });
+    }
+  }, [documentInfo]);
 
   const handleMenuAction = useCallback(
     (action: string) => {
@@ -58,6 +75,9 @@ export const App: React.FC = () => {
         case 'zoom-out':
           useDocumentStore.getState().zoomOut();
           break;
+        case 'export-images':
+          handleExportImages();
+          break;
         case 'toggle-sidebar':
           setSidebarVisible((v) => !v);
           break;
@@ -70,7 +90,7 @@ export const App: React.FC = () => {
           break;
       }
     },
-    [openDocument, setActiveTool, saveDocument]
+    [openDocument, setActiveTool, saveDocument, handleExportImages]
   );
 
   useEffect(() => {
@@ -91,7 +111,8 @@ export const App: React.FC = () => {
       const files = e.dataTransfer?.files;
       if (files && files.length > 0) {
         const file = files[0];
-        if (file.name.toLowerCase().endsWith('.pdf') && (file as any).path) {
+        const name = file.name.toLowerCase();
+        if ((name.endsWith('.pdf') || name.endsWith('.eps')) && (file as any).path) {
           openDocumentByPath((file as any).path);
         }
       }
@@ -175,6 +196,15 @@ export const App: React.FC = () => {
           maxWidth: 400, fontSize: 13, boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         }}>
           {error}
+        </div>
+      )}
+      {notification && (
+        <div style={{
+          position: 'fixed', bottom: 20, right: 20, background: '#2e7d32',
+          color: 'white', padding: '12px 20px', borderRadius: 6, zIndex: 9999,
+          maxWidth: 400, fontSize: 13, boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        }}>
+          {notification}
         </div>
       )}
     </div>

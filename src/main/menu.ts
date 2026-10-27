@@ -15,6 +15,7 @@ export function buildMenu(window: BrowserWindow): Menu {
         { label: 'Save As...', accelerator: 'CmdOrCtrl+Shift+S', click: () => sendAction('file-save-as') },
         { type: 'separator' },
         { label: 'Export Flattened...', click: () => sendAction('export-flattened') },
+        { label: 'Export Images...', click: () => sendAction('export-images') },
         { type: 'separator' },
         { label: 'Print', accelerator: 'CmdOrCtrl+P', click: () => sendAction('print') },
         { type: 'separator' },

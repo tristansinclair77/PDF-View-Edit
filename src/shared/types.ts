@@ -92,6 +92,7 @@ export interface ElectronAPI {
   pdfGetPageInfo: (pageNum: number) => Promise<PageInfo>;
   pdfExtractText: (params: { pageNum: number; rect?: Rect }) => Promise<TextBlock[]>;
   pdfExtractImages: (pageNum: number) => Promise<ImageInfo[]>;
+  pdfExportImagesToFolder: () => Promise<{ count: number; folder: string } | null>;
   pdfApplyRedactions: (redactions: RedactionArea[]) => Promise<ArrayBuffer>;
   pdfApplyEdits: (params: {
     edits: TextEdit[];

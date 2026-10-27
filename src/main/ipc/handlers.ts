@@ -5,33 +5,45 @@ import { PdfService } from '../pdf/pdfService';
 
 const pdfService = new PdfService();
 
+async function readAndConvertFile(filePath: string): Promise<{ buffer: ArrayBuffer; path: string }> {
+  const ext = path.extname(filePath).toLowerCase();
+
+  if (ext === '.eps') {
+    const raw = fs.readFileSync(filePath);
+    const epsBuffer = raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
+    const pdfBuffer = await pdfService.convertEpsToPdf(epsBuffer);
+    return { buffer: pdfBuffer, path: filePath };
+  }
+
+  const buffer = fs.readFileSync(filePath);
+  return {
+    buffer: buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength),
+    path: filePath,
+  };
+}
+
 export function registerIpcHandlers(): void {
   ipcMain.handle('file:open', async () => {
     const window = BrowserWindow.getFocusedWindow();
     if (!window) return null;
 
     const result = await dialog.showOpenDialog(window, {
-      filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
+      filters: [
+        { name: 'Supported Files', extensions: ['pdf', 'eps'] },
+        { name: 'PDF Files', extensions: ['pdf'] },
+        { name: 'EPS Files', extensions: ['eps'] },
+      ],
       properties: ['openFile'],
     });
 
     if (result.canceled || result.filePaths.length === 0) return null;
 
-    const filePath = result.filePaths[0];
-    const buffer = fs.readFileSync(filePath);
-    return {
-      buffer: buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength),
-      path: filePath,
-    };
+    return readAndConvertFile(result.filePaths[0]);
   });
 
   ipcMain.handle('file:open-path', async (_event, filePath: string) => {
     try {
-      const buffer = fs.readFileSync(filePath);
-      return {
-        buffer: buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength),
-        path: filePath,
-      };
+      return await readAndConvertFile(filePath);
     } catch {
       return null;
     }
@@ -79,6 +91,45 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('pdf:extract-images', async (_event, pageNum: number) => {
     return pdfService.extractImages(pageNum);
+  });
+
+  ipcMain.handle('pdf:export-images-to-folder', async () => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (!window) return null;
+
+    const result = await dialog.showOpenDialog(window, {
+      title: 'Select folder to export images',
+      buttonLabel: 'Export Here',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+
+    if (result.canceled || result.filePaths.length === 0) return null;
+
+    const outputFolder = result.filePaths[0];
+    const images = await pdfService.extractAllImages();
+
+    if (images.length > 0) {
+      for (const img of images) {
+        const filename = path.join(
+          outputFolder,
+          `image_p${img.pageNum + 1}_${String(img.index).padStart(3, '0')}.${img.ext}`
+        );
+        fs.writeFileSync(filename, Buffer.from(img.data));
+      }
+      return { count: images.length, folder: outputFolder };
+    }
+
+    // No embedded images found (e.g. EPS-sourced or vector-only PDF) —
+    // fall back to rendering each page as a PNG at 150 DPI.
+    const pageImages = await pdfService.renderPagesAsImages(150);
+    for (const img of pageImages) {
+      const filename = path.join(
+        outputFolder,
+        `page_${String(img.pageNum + 1).padStart(3, '0')}.png`
+      );
+      fs.writeFileSync(filename, Buffer.from(img.data));
+    }
+    return { count: pageImages.length, folder: outputFolder };
   });
 
   ipcMain.handle('pdf:apply-redactions', async (_event, redactions) => {

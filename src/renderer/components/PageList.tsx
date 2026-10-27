@@ -76,6 +76,25 @@ export const PageList: React.FC<PageListProps> = ({ containerRef, pendingSignatu
     return () => container.removeEventListener('scroll', handleScroll);
   }, [containerRef, setCurrentPage]);
 
+  // Ctrl+Wheel zoom
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        useDocumentStore.getState().zoomIn();
+      } else {
+        useDocumentStore.getState().zoomOut();
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [containerRef]);
+
   const setPageRef = useCallback((pageNum: number, el: HTMLDivElement | null) => {
     if (el) {
       pageRefs.current.set(pageNum, el);

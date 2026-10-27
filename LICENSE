@@ -1,1 +1,26 @@
 Copyright (c) 2026 Tristan Sinclair. All rights reserved.
+
+---
+
+THIRD-PARTY DEPENDENCY NOTICE
+
+This software includes the following third-party component subject to a
+different license:
+
+  @okathira/ghostpdl-wasm (https://github.com/okathira/ghostpdl-wasm)
+  License: GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)
+  Based on GhostPDL / Ghostscript by Artifex Software, Inc.
+
+The AGPL license permits use of this component in software that is not
+publicly distributed (i.e., internal/private use only). This software is
+intended for internal use and is not distributed to end users. If distribution
+ever becomes a requirement, a commercial license for Ghostscript must be
+obtained from Artifex Software, Inc. (https://www.artifex.com) to avoid
+AGPL copyleft obligations.
+
+  mupdf (https://mupdf.com)
+  License: GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)
+  By Artifex Software, Inc.
+
+Same terms apply as above. A commercial MuPDF license from Artifex is required
+for any form of distribution.
